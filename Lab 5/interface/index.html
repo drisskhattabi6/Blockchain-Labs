@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+        <title>Mini Twitter DApp</title>
+        <meta name='viewport' content='width=device-width, initial-scale=1'>
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
+    </head>
+
+    <body>
+        <h1>Mini Twitter DAPP</h1>
+        <p>Action : <span id="status">Loading...</span></p>
+        <div class="content">
+            <header>
+                <h3>Global Information :</h3>
+                <div class="global_info">
+                    <section>
+                        <h5>Connect Wallet</h5>
+                        <button onclick="connectWallet()">Connect</button>
+                        <p>Wallet Address : <br> <span id="wallet_address">None</span></p> 
+                    </section>
+                    <section>
+                        <h5>Change User</h5>
+                        <button onclick="changeUser()">Change</button>
+                    </section>
+                    <section>
+                        <h5>Add a Post</h5>
+                        <textarea style="width: 400px; resize: none;" rows="4" id="postMessage" 
+                        placeholder="Write your Post Content..."> </textarea>
+                        <button onclick="publishPost()">Publish</button>
+                    </section>
+                </div>
+            </header>
+            <hr width="100%">
+            <main>
+                <h3> Posts : </h3>
+                <div class="posts" id="posts"></div>
+            </main>
+        </div>
+
+        <script type="text/javascript">
+            let web3;
+            let contract;
+            let account;
+            const contractAddress = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
+            const contractABI = [
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "index",
+                                "type": "uint256"
+                            }
+                        ],
+                        "name": "dislikePost",
+                        "outputs": [],
+                        "stateMutability": "nonpayable",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "index",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "_newMessage",
+                                "type": "string"
+                            }
+                        ],
+                        "name": "editPost",
+                        "outputs": [],
+                        "stateMutability": "nonpayable",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "index",
+                                "type": "uint256"
+                            }
+                        ],
+                        "name": "getPost",
+                        "outputs": [
+                            {
+                                "internalType": "string",
+                                "name": "",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "address",
+                                "name": "",
+                                "type": "address"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            }
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [],
+                        "name": "getTotalPosts",
+                        "outputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            }
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "index",
+                                "type": "uint256"
+                            }
+                        ],
+                        "name": "likePost",
+                        "outputs": [],
+                        "stateMutability": "nonpayable",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            }
+                        ],
+                        "name": "posts",
+                        "outputs": [
+                            {
+                                "internalType": "string",
+                                "name": "message",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "address",
+                                "name": "author",
+                                "type": "address"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "likes",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "dislikes",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "timestamp",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "lastModified",
+                                "type": "uint256"
+                            }
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "string",
+                                "name": "_message",
+                                "type": "string"
+                            }
+                        ],
+                        "name": "publishPost",
+                        "outputs": [],
+                        "stateMutability": "nonpayable",
+                        "type": "function"
+                    }
+                ];
+
+            async function connectWallet() {
+                if (window.ethereum) {
+                    web3 = new Web3(window.ethereum);
+                    try {
+                        await window.ethereum.enable();
+                        account = (await web3.eth.getAccounts())[0];
+                        updateStatus(`Wallet connected: ${account}`);
+                        await loadContract();
+                        loadPosts();
+                        update_wallet_address()
+                    } catch (error) {
+                        console.error("User denied wallet connection:", error);
+                        updateStatus("Wallet connection denied.");
+                    }
+                } else {
+                    updateStatus("Please install MetaMask.");
+                }
+            }
+
+            async function loadContract() {
+                if (!web3) return;
+                contract = new web3.eth.Contract(contractABI, contractAddress);
+            }
+
+            async function update_wallet_address() {
+                const wallet_address = document.getElementById("wallet_address")
+                wallet_address.textContent = account
+            }
+
+            async function changeUser() {
+                if (window.ethereum) {
+                    try {
+                        // Request all available accounts
+                        const accounts = await web3.eth.getAccounts();
+                        if (accounts.length > 0) {
+                            // Prompt the user to select an account from the list
+                            const selectedAccount = prompt(
+                                `Select an account by index:\n${accounts.map((acc, idx) => `${idx}: ${acc}`).join('\n')}`
+                            );
+
+                            // Parse the selected index and validate it
+                            const index = parseInt(selectedAccount, 10);
+                            if (!isNaN(index) && index >= 0 && index < accounts.length) {
+                                account = accounts[index];
+                                updateStatus(`User changed to: ${account}`);
+                                loadPosts();
+                                update_wallet_address()
+                            } else {
+                                updateStatus("Invalid account selection.");
+                            }
+                        } else {
+                            updateStatus("No accounts found. Please connect your wallet.");
+                        }
+                    } catch (error) {
+                        console.error("Failed to change user:", error);
+                        updateStatus("Failed to change user.");
+                    }
+                } else {
+                    updateStatus("Please install MetaMask.");
+                }
+            }
+
+            async function publishPost() {
+                if (!contract || !account) {
+                    updateStatus("Please connect wallet first.");
+                    return;
+                }
+                const message = document.getElementById("postMessage").value;
+                if (!message) {
+                    updateStatus("Message cannot be empty.");
+                    return;
+                }
+                try {
+                    await contract.methods.publishPost(message).send({ from: account });
+                    console.log(message, account);
+                    
+                    updateStatus("Post Published!");
+                    document.getElementById("postMessage").value = '';
+                    loadPosts();
+                } catch (error) {
+                    console.error("Error publishing post:", error);
+                    updateStatus("Failed to publish post.");
+                }
+            }
+
+            async function loadPosts() {
+                
+                if (!contract) return;
+                const postsContainer = document.getElementById("posts");
+                postsContainer.innerHTML = "";
+
+                try {
+                    const totalPosts = await contract.methods.getTotalPosts().call();
+                    console.log('Total Pots : ', totalPosts);
+                    
+                    for (let i = 0; i < totalPosts; i++) {
+                        const post = await contract.methods.getPost(i).call();
+                        const postElement = document.createElement("div");
+                        postElement.classList.add("post");
+                        postElement.setAttribute("data-index", i);
+                        postElement.innerHTML = `
+                            <p>Account : ${post[1]} </p>
+                            <p>${new Date(post[5] * 1000).toLocaleString()} </p>
+                            <p class="post-content"><strong>${post[0]}</strong></p>
+                            <p style="display: flex;">
+                                <button onclick="likePost(${i})" class='like-btn'><i class="fa-solid fa-thumbs-up"></i> ${post[2]}</button>
+                                <button onclick="dislikePost(${i})" class='dislike-btn'><i class="fa-solid fa-thumbs-down"></i> ${post[3]}</button>
+                            </p>
+                            ${post[1] === account ? `<button onclick="editPost(${i})">Edit Post <i class="fa-solid fa-pen-to-square"></i></button>` : ''}
+                        `;
+                        postsContainer.appendChild(postElement);
+                    }
+
+                } catch (error) {
+                    console.error("Error loading posts:", error);
+                    updateStatus("Failed to load posts.");
+                }
+            }
+
+            async function likePost(index) {
+                if (!contract || !account) {
+                    updateStatus("Please connect wallet first.");
+                    return;
+                }
+                try {
+                    await contract.methods.likePost(index).send({ from: account });
+                    updateStatus(`Liked post ${index}`);
+                    loadPosts();
+                } catch (error) {
+                    console.error("Error liking post:", error);
+                    updateStatus("Failed to like post.");
+                }
+            }
+
+            async function dislikePost(index) {
+                if (!contract || !account) {
+                    updateStatus("Please connect wallet first.");
+                    return;
+                }
+                try {
+                    await contract.methods.dislikePost(index).send({ from: account });
+                    updateStatus(`Disliked post ${index}`);
+                    loadPosts();
+                } catch (error) {
+                    console.error("Error disliking post:", error);
+                    updateStatus("Failed to dislike post.");
+                }
+            }
+
+            async function editPost(index) {
+                const newMessage = prompt("Enter the new content for the post:");
+                if (!newMessage) {
+                    updateStatus("Edit cancelled.");
+                    return;
+                }
+                try {
+                    await contract.methods.editPost(index, newMessage).send({ from: account });
+                    updateStatus("Post edited successfully.");
+                    loadPosts();
+                } catch (error) {
+                    console.error("Error editing post:", error);
+                    updateStatus("Failed to edit post.");
+                }
+            }
+
+            function updateStatus(status) {
+                const statusEl = document.getElementById("status");
+                statusEl.innerHTML = status;
+            }
+
+            document.addEventListener("DOMContentLoaded", connectWallet);
+        </script>
+    </body>
+</html>

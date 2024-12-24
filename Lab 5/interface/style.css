@@ -1,0 +1,112 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-color: #f4f4f4;
+    margin: 0;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+p {
+    margin: 5px;
+}
+
+/*---------------*/
+
+.content {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.global_info {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    margin: 20px;
+    padding: 10px;
+    width: 100%;
+}
+
+section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px;
+    max-width: 30%;
+}
+
+input, button {
+    padding: 10px;
+    margin: 10px 0;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+button {
+    background-color: #07868f;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #05676e;
+}
+
+
+.like-btn {
+    background-color: #4CAF50;
+}
+
+.like-btn:hover {
+    background-color: #45a049;
+}
+
+.dislike-btn {
+    background-color: #e43636;
+}
+
+.dislike-btn:hover {
+    background-color: #a32a2a;
+}
+
+#status {
+    font-weight: bold;
+    color: #333;
+    
+}
+
+.posts {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.post {
+    background-color: #dbff58;
+    padding: 5px 10px;
+    border-radius: 10px;
+    width: 370px;
+    margin: 5px;
+    transition: all .3s ease;
+}
+
+.post:hover {
+    box-shadow: 5px 5px 8px rgba(0, 0, 0, 0.192);
+}
+
+.post-content {
+    background-color: #ffffff;
+    /* border-radius: 7px; */
+    padding: 7px 10px;
+}
